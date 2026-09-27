@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Models\Conversation;
+use App\Models\ConversationMember;
 use App\Http\Requests\SearchUserRequest;
 use App\Http\Requests\SendFriendRequest;
 use App\Http\Requests\RespondFriendRequest;
@@ -176,6 +179,19 @@ public function respondToRequest(
         'friend_id' => $friendRequest->sender_id,
     ]);
 
+    $conversation = Conversation::create([
+    'type' => 'private',
+]);
+
+ConversationMember::create([
+    'conversation_id' => $conversation->id,
+    'user_id' => $friendRequest->sender_id,
+]);
+
+ConversationMember::create([
+    'conversation_id' => $conversation->id,
+    'user_id' => $friendRequest->receiver_id,
+]);
     $friendRequest->update([
         'status' => 'accepted',
         'responded_at' => now(),

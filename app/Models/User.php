@@ -48,4 +48,10 @@ public function friendships(): HasMany
 {
     return $this->hasMany(Friendship::class, 'user_id');
 }
+
+public function conversationMembers(): HasMany
+{
+    return $this->hasMany(ConversationMember::class);
+}
+
 }
