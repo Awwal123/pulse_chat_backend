@@ -18,11 +18,3 @@ Route::get('/debug/php-upload', function () {
         'temp_writable' => is_writable(sys_get_temp_dir()),
     ]);
 });
-
-Route::post('/debug/test-upload', function (Request $request) {
-    return response()->json([
-        'files' => $_FILES,
-        'has_file' => $request->hasFile('image'),
-        'file' => $request->file('image'),
-    ]);
-});
