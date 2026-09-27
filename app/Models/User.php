@@ -15,6 +15,9 @@ use Laravel\Sanctum\HasApiTokens;
     'name',
     'profile_picture',
     'security_pin',
+    'email',
+    'gender',
+    'birthday',
 ])]
 #[Hidden([
     'security_pin',
