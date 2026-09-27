@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'phone',
@@ -33,4 +34,18 @@ class User extends Authenticatable
             'security_pin' => 'hashed',
         ];
     }
+    public function sentFriendRequests(): HasMany
+{
+    return $this->hasMany(FriendRequest::class, 'sender_id');
+}
+
+public function receivedFriendRequests(): HasMany
+{
+    return $this->hasMany(FriendRequest::class, 'receiver_id');
+}
+
+public function friendships(): HasMany
+{
+    return $this->hasMany(Friendship::class, 'user_id');
+}
 }
