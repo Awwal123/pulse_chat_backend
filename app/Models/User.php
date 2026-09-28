@@ -54,4 +54,8 @@ public function conversationMembers(): HasMany
     return $this->hasMany(ConversationMember::class);
 }
 
+public function messageReads(): HasMany
+{
+    return $this->hasMany(MessageRead::class);
+}
 }

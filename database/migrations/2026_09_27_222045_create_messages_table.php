@@ -10,13 +10,34 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('messages', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('messages', function (Blueprint $table) {
+        $table->id();
 
+        $table->foreignId('conversation_id')
+            ->constrained('conversations')
+            ->cascadeOnDelete();
+
+        $table->foreignId('sender_id')
+            ->constrained('users')
+            ->cascadeOnDelete();
+
+        $table->text('message')->nullable();
+
+        $table->foreignId('reply_to_id')
+            ->nullable()
+            ->constrained('messages')
+            ->nullOnDelete();
+
+        $table->timestamp('edited_at')->nullable();
+
+        $table->timestamp('deleted_at')->nullable();
+
+        $table->timestamps();
+
+        $table->index(['conversation_id', 'created_at']);
+    });
+}
     /**
      * Reverse the migrations.
      */

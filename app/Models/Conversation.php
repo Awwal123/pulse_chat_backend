@@ -17,4 +17,9 @@ class Conversation extends Model
     {
         return $this->hasMany(ConversationMember::class);
     }
+
+    public function messages(): HasMany
+{
+    return $this->hasMany(Message::class);
+}
 }

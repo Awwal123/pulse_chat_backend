@@ -6,7 +6,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FriendRequestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\MessageReadController;
 // Get the currently authenticated user
 Route::middleware('auth:sanctum')->get(
     '/user',
@@ -53,4 +55,39 @@ Route::middleware('auth:sanctum')->post(
 Route::middleware('auth:sanctum')->get(
     '/friends/get-friends',
     [FriendRequestController::class, 'getFriends']
+);
+
+// conversation endpoint
+
+Route::middleware('auth:sanctum')->post(
+    '/conversations/{conversation}/messages',
+    [MessageController::class, 'send']
+);
+
+Route::middleware('auth:sanctum')->get(
+    '/conversations/{conversation}/messages',
+    [MessageController::class, 'index']
+);
+Route::middleware('auth:sanctum')->get(
+    '/conversations/get-chat-list',
+    [ConversationController::class, 'getChatList']
+);
+Route::middleware('auth:sanctum')->post(
+    '/messages/mark-as-read',
+    [MessageReadController::class, 'markAsRead']
+);
+
+Route::middleware('auth:sanctum')->get(
+    '/messages/{message}/read-status',
+    [MessageReadController::class, 'getReadStatus']
+);
+
+Route::middleware('auth:sanctum')->put(
+    '/messages/{message}/edit-message',
+    [MessageController::class, 'update']
+);
+
+Route::middleware('auth:sanctum')->delete(
+    '/messages/{message}/delete-message',
+    [MessageController::class, 'destroy']
 );
