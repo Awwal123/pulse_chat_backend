@@ -11,6 +11,8 @@ use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
 use Hash;
 use Illuminate\Http\Request;
+use App\Services\WhatsAppService;
+
 class AuthController extends Controller
 {
     use HttpResponses;
@@ -50,8 +52,10 @@ class AuthController extends Controller
     );
 }
 
-  public function sendOtp(SendOtpRequest $request)
-{
+public function sendOtp(
+    SendOtpRequest $request,
+    WhatsAppService $whatsapp
+) {
     $userExists = User::where('phone', $request->phone)->exists();
 
     if ($request->purpose === 'register' && $userExists) {
@@ -101,6 +105,21 @@ class AuthController extends Controller
         'purpose' => $request->purpose,
         'expires_at' => now()->addMinutes(5),
     ]);
+
+    // Convert Nigerian phone number to WhatsApp chat ID
+    $phone = $request->phone;
+
+    if (str_starts_with($phone, '0')) {
+        $phone = '234' . substr($phone, 1);
+    }
+
+    $chatId = $phone . '@c.us';
+
+    // Send OTP through WhatsApp
+    $whatsapp->sendMessage(
+        $chatId,
+        "Your Pulse Chat verification code is: {$otp}\n\nThis code expires in 5 minutes."
+    );
 
     return $this->success(
         null,

@@ -13,7 +13,12 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-
+    
+'openwa' => [
+    'base_url' => env('OPENWA_BASE_URL'),
+    'api_key' => env('OPENWA_API_KEY'),
+    'session_id' => env('OPENWA_SESSION_ID'),
+],
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
