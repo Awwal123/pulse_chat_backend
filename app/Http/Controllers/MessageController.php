@@ -90,9 +90,13 @@ class MessageController extends Controller
                 'replyTo.sender',
             ])
             ->latest()
-            ->get()
-            ->reverse()
-            ->values();
+            ->paginate(30);
+
+        $messages->setCollection(
+            $messages->getCollection()
+                ->reverse()
+                ->values()
+        );
 
         return $this->success(
             $messages,
