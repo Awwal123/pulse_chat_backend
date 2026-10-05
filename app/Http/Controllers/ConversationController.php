@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Traits\HttpResponses;
@@ -12,11 +13,11 @@ class ConversationController extends Controller
     {
         $user = $request->user();
 
-     $conversations = $user->conversationMembers()
-    ->with([
-        'conversation.members.user',
-        'conversation.latestMessage',
-    ])
+        $conversations = $user->conversationMembers()
+            ->with([
+                'conversation.members.user',
+                'conversation.latestMessage',
+            ])
             ->get()
             ->map(function ($conversationMember) use ($user) {
 
@@ -27,7 +28,8 @@ class ConversationController extends Controller
                         return $member->user_id !== $user->id;
                     });
 
-              $lastMessage = $conversation->latestMessage;
+                $lastMessage = $conversation->latestMessage;
+
                 $unreadCount = $conversation->messages()
                     ->where('sender_id', '!=', $user->id)
                     ->whereDoesntHave('reads', function ($query) use ($user) {
@@ -62,7 +64,9 @@ class ConversationController extends Controller
 
                     'unread_count' => $unreadCount,
                 ];
-            });
+            })
+            ->sortByDesc('last_message_at')
+            ->values();
 
         return $this->success(
             $conversations,
