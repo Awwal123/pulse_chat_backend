@@ -2,17 +2,15 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Resend, Postmark, AWS, and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
+
+  'firebase' => [
+    'credentials' => storage_path(
+        env(
+            'FIREBASE_CREDENTIALS',
+            'app/firebase/firebase-service-account.json'
+        )
+    ),
+],
     
 'openwa' => [
     'base_url' => env('OPENWA_BASE_URL'),

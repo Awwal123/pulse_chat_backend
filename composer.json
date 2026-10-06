@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.3",
         "cloudinary/cloudinary_php": "^1.20",
+        "kreait/firebase-php": "^8.5",
         "laravel/framework": "^13.17",
         "laravel/reverb": "^1.12",
         "laravel/sanctum": "^4.3",

@@ -9,11 +9,19 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\MessageReadController;
+use App\Http\Controllers\DeviceTokenController;
+use App\Http\Controllers\GroupController;
 // Get the currently authenticated user
 Route::middleware('auth:sanctum')->get(
     '/user',
     [UserController::class, 'me']
 );
+
+Route::middleware('auth:sanctum')->post(
+    '/device-tokens',
+    [DeviceTokenController::class, 'store']
+);
+
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -91,3 +99,20 @@ Route::middleware('auth:sanctum')->delete(
     '/messages/{message}/delete-message',
     [MessageController::class, 'destroy']
 );
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post(
+        '/groups',
+        [GroupController::class, 'store']
+    );
+
+    Route::get(
+        '/groups/{conversation}/members',
+        [GroupController::class, 'members']
+    );
+
+    Route::post(
+        '/groups/{conversation}/members',
+        [GroupController::class, 'addMembers']
+    );
+});

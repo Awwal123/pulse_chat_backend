@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\Conversation;
 use App\Models\ConversationMember;
 use App\Http\Requests\SearchUserRequest;
@@ -12,6 +11,7 @@ use App\Models\FriendRequest;
 use App\Models\Friendship;
 use App\Models\User;
 use App\Traits\HttpResponses;
+use App\Services\FirebaseNotificationService;
 
 class FriendRequestController extends Controller
 {
@@ -40,167 +40,210 @@ class FriendRequestController extends Controller
         );
     }
 
-    public function sendRequest(SendFriendRequest $request)
-{
-    $sender = $request->user();
+    public function sendRequest(
+        SendFriendRequest $request,
+        FirebaseNotificationService $firebaseNotificationService
+    ) {
+        $sender = $request->user();
 
-    if ($sender->id === $request->receiver_id) {
-        return $this->error(
-            null,
-            'You cannot send a friend request to yourself.',
-            400
+        if ($sender->id === $request->receiver_id) {
+            return $this->error(
+                null,
+                'You cannot send a friend request to yourself.',
+                400
+            );
+        }
+
+        $existingRequest = FriendRequest::where(function ($query) use ($sender, $request) {
+            $query->where('sender_id', $sender->id)
+                ->where('receiver_id', $request->receiver_id);
+        })->orWhere(function ($query) use ($sender, $request) {
+            $query->where('sender_id', $request->receiver_id)
+                ->where('receiver_id', $sender->id);
+        })->first();
+
+        if ($existingRequest) {
+            return $this->error(
+                null,
+                'A friend request already exists between these users.',
+                409
+            );
+        }
+
+        $friendRequest = FriendRequest::create([
+            'sender_id' => $sender->id,
+            'receiver_id' => $request->receiver_id,
+            'status' => 'pending',
+        ]);
+
+        $receiver = User::with('deviceTokens')->find($request->receiver_id);
+
+        foreach ($receiver->deviceTokens as $deviceToken) {
+            try {
+                $firebaseNotificationService->sendToToken(
+                    $deviceToken->token,
+                    $sender->name,
+                    'Sent you a friend request.',
+                    [
+                        'type' => 'friend_request',
+                        'friend_request_id' => (string) $friendRequest->id,
+                        'sender_id' => (string) $sender->id,
+                    ]
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return $this->success(
+            $friendRequest,
+            'Friend request sent successfully.',
+            201
         );
     }
 
-    $existingRequest = FriendRequest::where(function ($query) use ($sender, $request) {
-        $query->where('sender_id', $sender->id)
-            ->where('receiver_id', $request->receiver_id);
-    })->orWhere(function ($query) use ($sender, $request) {
-        $query->where('sender_id', $request->receiver_id)
-            ->where('receiver_id', $sender->id);
-    })->first();
+    public function getFriendRequests()
+    {
+        $user = request()->user();
 
-    if ($existingRequest) {
-        return $this->error(
-            null,
-            'A friend request already exists between these users.',
-            409
+        $requests = FriendRequest::with([
+            'sender:id,name,phone,profile_picture'
+        ])
+            ->where('receiver_id', $user->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'friend_request_id' => $request->id,
+                    'sender_id' => $request->sender_id,
+                    'receiver_id' => $request->receiver_id,
+                    'status' => $request->status,
+                    'responded_at' => $request->responded_at,
+                    'created_at' => $request->created_at,
+                    'sender' => $request->sender,
+                ];
+            });
+
+        return $this->success(
+            $requests,
+            'Friend requests retrieved successfully.'
         );
     }
 
-    $friendRequest = FriendRequest::create([
-        'sender_id' => $sender->id,
-        'receiver_id' => $request->receiver_id,
-        'status' => 'pending',
-    ]);
+    public function getFriends()
+    {
+        $user = request()->user();
 
-    return $this->success(
-        $friendRequest,
-        'Friend request sent successfully.',
-        201
-    );
-}
+        $friendships = Friendship::with([
+            'friend:id,name,phone,profile_picture'
+        ])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get()
+            ->map(function ($friendship) {
+                return [
+                    'friendship_id' => $friendship->id,
+                    'friend' => $friendship->friend,
+                ];
+            });
 
-public function getFriendRequests()
-{
-    $user = request()->user();
-
-    $requests = FriendRequest::with([
-        'sender:id,name,phone,profile_picture'
-    ])
-        ->where('receiver_id', $user->id)
-        ->where('status', 'pending')
-        ->latest()
-        ->get()
-        ->map(function ($request) {
-            return [
-                'friend_request_id' => $request->id,
-                'sender_id' => $request->sender_id,
-                'receiver_id' => $request->receiver_id,
-                'status' => $request->status,
-                'responded_at' => $request->responded_at,
-                'created_at' => $request->created_at,
-                'sender' => $request->sender,
-            ];
-        });
-
-    return $this->success(
-        $requests,
-        'Friend requests retrieved successfully.'
-    );
-}
-
-public function getFriends()
-{
-    $user = request()->user();
-
-    $friendships = Friendship::with([
-        'friend:id,name,phone,profile_picture'
-    ])
-        ->where('user_id', $user->id)
-        ->latest()
-        ->get()
-        ->map(function ($friendship) {
-            return [
-                'friendship_id' => $friendship->id,
-                'friend' => $friendship->friend,
-            ];
-        });
-
-    return $this->success(
-        $friendships,
-        'Friends retrieved successfully.'
-    );
-}
-
-public function respondToRequest(
-    RespondFriendRequest $request,
-    FriendRequest $friendRequest
-) {
-    $user = $request->user();
-
-    if ($friendRequest->receiver_id !== $user->id) {
-        return $this->error(
-            null,
-            'You are not allowed to respond to this friend request.',
-            403
+        return $this->success(
+            $friendships,
+            'Friends retrieved successfully.'
         );
     }
 
-    if ($friendRequest->status !== 'pending') {
-        return $this->error(
-            null,
-            'This friend request has already been responded to.',
-            409
-        );
-    }
+    public function respondToRequest(
+        RespondFriendRequest $request,
+        FriendRequest $friendRequest,
+        FirebaseNotificationService $firebaseNotificationService
+    ) {
+        $user = $request->user();
 
-    if ($request->action === 'reject') {
+        if ($friendRequest->receiver_id !== $user->id) {
+            return $this->error(
+                null,
+                'You are not allowed to respond to this friend request.',
+                403
+            );
+        }
+
+        if ($friendRequest->status !== 'pending') {
+            return $this->error(
+                null,
+                'This friend request has already been responded to.',
+                409
+            );
+        }
+
+        if ($request->action === 'reject') {
+            $friendRequest->update([
+                'status' => 'rejected',
+                'responded_at' => now(),
+            ]);
+
+            return $this->success(
+                $friendRequest->fresh(),
+                'Friend request rejected successfully.'
+            );
+        }
+
+        // Accept the friend request
+
+        Friendship::create([
+            'user_id' => $friendRequest->sender_id,
+            'friend_id' => $friendRequest->receiver_id,
+        ]);
+
+        Friendship::create([
+            'user_id' => $friendRequest->receiver_id,
+            'friend_id' => $friendRequest->sender_id,
+        ]);
+
+        $conversation = Conversation::create([
+            'type' => 'private',
+        ]);
+
+        ConversationMember::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $friendRequest->sender_id,
+        ]);
+
+        ConversationMember::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $friendRequest->receiver_id,
+        ]);
+
         $friendRequest->update([
-            'status' => 'rejected',
+            'status' => 'accepted',
             'responded_at' => now(),
         ]);
 
+        // Notify the person who sent the friend request
+
+        $sender = User::with('deviceTokens')->find($friendRequest->sender_id);
+
+        foreach ($sender->deviceTokens as $deviceToken) {
+            try {
+                $firebaseNotificationService->sendToToken(
+                    $deviceToken->token,
+                    $user->name,
+                    'Accepted your friend request.',
+                    [
+                        'type' => 'friend_request_accepted',
+                        'friend_request_id' => (string) $friendRequest->id,
+                        'receiver_id' => (string) $user->id,
+                    ]
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
         return $this->success(
             $friendRequest->fresh(),
-            'Friend request rejected successfully.'
+            'Friend request accepted successfully.'
         );
     }
-
-    // Accept the friend request
-
-    Friendship::create([
-        'user_id' => $friendRequest->sender_id,
-        'friend_id' => $friendRequest->receiver_id,
-    ]);
-
-    Friendship::create([
-        'user_id' => $friendRequest->receiver_id,
-        'friend_id' => $friendRequest->sender_id,
-    ]);
-
-    $conversation = Conversation::create([
-    'type' => 'private',
-]);
-
-ConversationMember::create([
-    'conversation_id' => $conversation->id,
-    'user_id' => $friendRequest->sender_id,
-]);
-
-ConversationMember::create([
-    'conversation_id' => $conversation->id,
-    'user_id' => $friendRequest->receiver_id,
-]);
-    $friendRequest->update([
-        'status' => 'accepted',
-        'responded_at' => now(),
-    ]);
-
-    return $this->success(
-        $friendRequest->fresh(),
-        'Friend request accepted successfully.'
-    );
-}
-
 }

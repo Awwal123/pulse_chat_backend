@@ -41,12 +41,22 @@ class ConversationController extends Controller
                     'conversation_id' => $conversation->id,
                     'type' => $conversation->type,
 
-                    'friend' => $otherMember
+                    // Private chat
+                    'friend' => $conversation->type === 'private' && $otherMember
                         ? [
                             'id' => $otherMember->user->id,
                             'name' => $otherMember->user->name,
                             'phone' => $otherMember->user->phone,
                             'profile_picture' => $otherMember->user->profile_picture,
+                        ]
+                        : null,
+
+                    // Group chat
+                    'group' => $conversation->type === 'group'
+                        ? [
+                            'name' => $conversation->name,
+                            'profile_picture' => $conversation->profile_picture,
+                            'member_count' => $conversation->members->count(),
                         ]
                         : null,
 

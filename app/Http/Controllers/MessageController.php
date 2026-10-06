@@ -8,7 +8,9 @@ use App\Http\Requests\EditMessageRequest;
 use App\Http\Requests\SendMessageRequest;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\FirebaseNotificationService;
 use App\Traits\HttpResponses;
+use Throwable;
 
 class MessageController extends Controller
 {
@@ -16,7 +18,8 @@ class MessageController extends Controller
 
     public function send(
         SendMessageRequest $request,
-        Conversation $conversation
+        Conversation $conversation,
+        FirebaseNotificationService $firebaseNotificationService
     ) {
         $user = $request->user();
 
@@ -60,6 +63,34 @@ class MessageController extends Controller
         ]);
 
         broadcast(new MessageSent($message));
+
+        /*
+         * Send push notification to the other members
+         * of the conversation.
+         */
+        $recipients = $conversation->members()
+            ->where('user_id', '!=', $user->id)
+            ->with('user.deviceTokens')
+            ->get();
+
+        foreach ($recipients as $recipient) {
+            foreach ($recipient->user->deviceTokens as $deviceToken) {
+                try {
+                    $firebaseNotificationService->sendToToken(
+                        $deviceToken->token,
+                        $user->name,
+                        $message->message ?? 'Sent you a message.',
+                        [
+                            'type' => 'message',
+                            'conversation_id' => (string) $conversation->id,
+                            'message_id' => (string) $message->id,
+                        ]
+                    );
+                } catch (Throwable $e) {
+                    report($e);
+                }
+            }
+        }
 
         return $this->success(
             $message,

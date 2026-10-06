@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,9 +21,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'gender',
     'birthday',
 ])]
+
 #[Hidden([
     'security_pin',
 ])]
+
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -34,28 +37,34 @@ class User extends Authenticatable
             'security_pin' => 'hashed',
         ];
     }
+
     public function sentFriendRequests(): HasMany
-{
-    return $this->hasMany(FriendRequest::class, 'sender_id');
-}
+    {
+        return $this->hasMany(FriendRequest::class, 'sender_id');
+    }
 
-public function receivedFriendRequests(): HasMany
-{
-    return $this->hasMany(FriendRequest::class, 'receiver_id');
-}
+    public function receivedFriendRequests(): HasMany
+    {
+        return $this->hasMany(FriendRequest::class, 'receiver_id');
+    }
 
-public function friendships(): HasMany
-{
-    return $this->hasMany(Friendship::class, 'user_id');
-}
+    public function friendships(): HasMany
+    {
+        return $this->hasMany(Friendship::class, 'user_id');
+    }
 
-public function conversationMembers(): HasMany
-{
-    return $this->hasMany(ConversationMember::class);
-}
+    public function conversationMembers(): HasMany
+    {
+        return $this->hasMany(ConversationMember::class);
+    }
 
-public function messageReads(): HasMany
-{
-    return $this->hasMany(MessageRead::class);
-}
+    public function messageReads(): HasMany
+    {
+        return $this->hasMany(MessageRead::class);
+    }
+
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
 }
