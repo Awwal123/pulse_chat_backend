@@ -55,7 +55,6 @@ RUN composer install \
 COPY . .
 
 # Run Laravel's package discovery after application files exist
-RUN php artisan package:discover --ansi
 
 # Storage permissions
 RUN chown -R www-data:www-data \
