@@ -15,6 +15,13 @@ class SendOtpRequest extends FormRequest
     {
         return [
             'phone' => ['required', 'string'],
+
+            'email' => [
+                'required_if:purpose,register',
+                'nullable',
+                'email',
+            ],
+
             'purpose' => ['required', 'in:register,login'],
         ];
     }

@@ -37,5 +37,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    
+    'sendlib' => [
+    'api_key' => env('SENDLIB_API_KEY'),
+    'from_email' => env('SENDLIB_FROM_EMAIL'),
+],
 
 ];

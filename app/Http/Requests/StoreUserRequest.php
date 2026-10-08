@@ -20,13 +20,14 @@ class StoreUserRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
-    {
-        return [
-            'phone' => ['required', 'string'],
-            'name' => ['required', 'string', 'max:255'],
-            'profile_picture' => ['nullable', 'string'],
-            'security_pin' => ['nullable', 'digits:4']
-        ];
-    }
+  public function rules(): array
+{
+    return [
+        'phone' => ['required', 'string'],
+        'email' => ['required', 'email', 'unique:users,email'],
+        'name' => ['required', 'string', 'max:255'],
+        'profile_picture' => ['nullable', 'string'],
+        'security_pin' => ['nullable', 'digits:4'],
+    ];
+}
 }
