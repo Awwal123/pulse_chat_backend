@@ -3,10 +3,12 @@
 return [
 
 
-'firebase' => [
-    'credentials' => env(
-        'FIREBASE_CREDENTIALS',
-        '/etc/secrets/firebase-service-account.json'
+  'firebase' => [
+    'credentials' => storage_path(
+        env(
+            'FIREBASE_CREDENTIALS',
+            'app/firebase/firebase-service-account.json'
+        )
     ),
 ],
     

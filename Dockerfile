@@ -68,4 +68,4 @@ RUN chmod -R 775 \
 EXPOSE 80
 
 
-CMD ["sh", "-c", "php artisan migrate --force && apache2-foreground"]
+CMD ["sh", "-c", "cp /etc/secrets/firebase-service-account.json storage/app/firebase/firebase-service-account.json && chown www-data:www-data storage/app/firebase/firebase-service-account.json && php artisan migrate --force && apache2-foreground"]
