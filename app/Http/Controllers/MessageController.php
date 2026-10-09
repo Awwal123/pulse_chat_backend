@@ -62,10 +62,16 @@ class MessageController extends Controller
             'replyTo.sender',
         ]);
 
-        broadcast(new MessageSent($message));
+        // Broadcast the message without allowing a broadcasting
+        // failure to turn a successfully saved message into a 500.
+        try {
+            broadcast(new MessageSent($message));
+        } catch (Throwable $e) {
+            report($e);
+        }
 
         /*
-         * Send push notification to the other members
+         * Send push notifications to the other members
          * of the conversation.
          */
         $recipients = $conversation->members()
