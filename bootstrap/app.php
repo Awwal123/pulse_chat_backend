@@ -14,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
 
         then: function () {
+            // TEMP DEBUG: remove after we read the result in Render logs.
+            \Log::channel('stderr')->warning('BROADCAST_DEBUG', [
+                'default' => config('broadcasting.default'),
+                'driver_class' => get_class(app(\Illuminate\Contracts\Broadcasting\Factory::class)->driver()),
+            ]);
+
             Broadcast::routes([
                 'middleware' => ['auth:sanctum'],
             ]);
