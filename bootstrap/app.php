@@ -19,22 +19,6 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
 
             require base_path('routes/channels.php');
-
-            // TEMP DEBUG (remove after reading the result): shows the active broadcaster.
-            // Prints only class names and true/false flags, no secret values.
-            \Illuminate\Support\Facades\Route::get('/_bd', function () {
-                return response()->json([
-                    'default' => config('broadcasting.default'),
-                    'driver_class' => get_class(
-                        app(\Illuminate\Contracts\Broadcasting\Factory::class)->driver()
-                    ),
-                    'config_cached' => app()->configurationIsCached(),
-                    'routes_cached' => app()->routesAreCached(),
-                    'reverb_key_set' => filled(config('broadcasting.connections.reverb.key')),
-                    'reverb_secret_set' => filled(config('broadcasting.connections.reverb.secret')),
-                    'reverb_app_id_set' => filled(config('broadcasting.connections.reverb.app_id')),
-                ]);
-            });
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
