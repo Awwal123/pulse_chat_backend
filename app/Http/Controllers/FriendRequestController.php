@@ -154,6 +154,110 @@ class FriendRequestController extends Controller
         );
     }
 
+    // ── friend suggestions ───────────────────────────────
+
+    // A few random people to suggest. The pinned account (DevAmeer) is always first.
+    public function getSuggestions()
+    {
+        $user = request()->user();
+
+        $limit = min(max(request()->integer('limit', 10), 1), 20);
+
+        $excludedIds = $this->suggestionExcludedIds($user);
+        $pinned = $this->pinnedSuggestion($excludedIds);
+
+        $random = User::whereNotIn('id', $excludedIds)
+            ->when($pinned, fn ($query) => $query->where('id', '!=', $pinned->id))
+            ->inRandomOrder()
+            ->limit($limit - ($pinned ? 1 : 0))
+            ->get(['id', 'name', 'profile_picture']);
+
+        $suggestions = collect([$pinned])
+            ->filter()
+            ->concat($random)
+            ->values()
+            ->map(fn ($suggested) => $this->formatSuggestion($suggested, $pinned));
+
+        return $this->success(
+            $suggestions,
+            'Friend suggestions retrieved successfully.'
+        );
+    }
+
+    // EVERY person the user could still add, paginated (stable A-Z order so pages
+    // never reshuffle). The pinned account is added at the top of page 1.
+    public function getAllSuggestions()
+    {
+        $user = request()->user();
+
+        $perPage = min(max(request()->integer('per_page', 20), 1), 50);
+
+        $excludedIds = $this->suggestionExcludedIds($user);
+        $pinned = $this->pinnedSuggestion($excludedIds);
+
+        $page = User::whereNotIn('id', $excludedIds)
+            ->when($pinned, fn ($query) => $query->where('id', '!=', $pinned->id))
+            ->orderBy('name')
+            ->orderBy('id')
+            ->paginate($perPage, ['id', 'name', 'profile_picture']);
+
+        $items = $page->getCollection()
+            ->map(fn ($suggested) => $this->formatSuggestion($suggested, $pinned));
+
+        if ($pinned && $page->currentPage() === 1) {
+            $items->prepend($this->formatSuggestion($pinned, $pinned));
+        }
+
+        return $this->success(
+            [
+                'data' => $items->values(),
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(),
+                'total' => $page->total() + ($pinned ? 1 : 0),
+            ],
+            'Friend suggestions retrieved successfully.'
+        );
+    }
+
+    // myself, my friends, and anyone I already have a request with (either direction):
+    // sending to them would be rejected with 409 anyway.
+    private function suggestionExcludedIds(User $user)
+    {
+        return collect([$user->id])
+            ->merge(Friendship::where('user_id', $user->id)->pluck('friend_id'))
+            ->merge(FriendRequest::where('sender_id', $user->id)->pluck('receiver_id'))
+            ->merge(FriendRequest::where('receiver_id', $user->id)->pluck('sender_id'))
+            ->unique()
+            ->values();
+    }
+
+    // The default suggestion shown first to everyone (config/friends.php).
+    // Matches on the last 10 digits, so 0903..., +234903... and 234903... all match.
+    private function pinnedSuggestion($excludedIds): ?User
+    {
+        $digits = preg_replace('/\D/', '', (string) config('friends.pinned_phone'));
+
+        if (strlen($digits) < 10) {
+            return null;
+        }
+
+        return User::where('phone', 'like', '%' . substr($digits, -10))
+            ->whereNotIn('id', $excludedIds)
+            ->first(['id', 'name', 'profile_picture']);
+    }
+
+    // No phone numbers on purpose: this list is shown to every user.
+    private function formatSuggestion(User $suggested, ?User $pinned): array
+    {
+        return [
+            'id' => $suggested->id,
+            'name' => $suggested->name,
+            'profile_picture' => $suggested->profile_picture,
+            'is_featured' => $pinned !== null && $suggested->id === $pinned->id,
+        ];
+    }
+
     public function respondToRequest(
         RespondFriendRequest $request,
         FriendRequest $friendRequest,

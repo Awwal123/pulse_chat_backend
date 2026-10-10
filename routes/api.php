@@ -65,6 +65,10 @@ Route::middleware('auth:sanctum')->get(
     [FriendRequestController::class, 'getFriends']
 );
 
+
+Route::get('/friends/suggestions', [FriendRequestController::class, 'getSuggestions']);
+Route::get('/friends/suggestions/all', [FriendRequestController::class, 'getAllSuggestions']);
+
 // conversation endpoint
 
 Route::middleware('auth:sanctum')->post(
