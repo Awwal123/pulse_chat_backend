@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\FriendRequestAccepted;
 use App\Models\Conversation;
 use App\Models\ConversationMember;
 use App\Http\Requests\SearchUserRequest;
@@ -323,6 +324,17 @@ class FriendRequestController extends Controller
             'status' => 'accepted',
             'responded_at' => now(),
         ]);
+
+        // Tell the sender's app right away (their chat list gets the new conversation)
+        try {
+            broadcast(new FriendRequestAccepted(
+                userId: $friendRequest->sender_id,
+                conversationId: $conversation->id,
+                friendId: $user->id,
+            ));
+        } catch (\Throwable $e) {
+            report($e); // a broadcast failure must never fail the accept
+        }
 
         // Notify the person who sent the friend request
 
