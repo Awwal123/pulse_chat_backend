@@ -65,9 +65,16 @@ Route::middleware('auth:sanctum')->get(
     [FriendRequestController::class, 'getFriends']
 );
 
+// friend suggestions (random preview list, and the full paginated list)
+Route::middleware('auth:sanctum')->get(
+    '/friends/suggestions',
+    [FriendRequestController::class, 'getSuggestions']
+);
 
-Route::get('/friends/suggestions', [FriendRequestController::class, 'getSuggestions']);
-Route::get('/friends/suggestions/all', [FriendRequestController::class, 'getAllSuggestions']);
+Route::middleware('auth:sanctum')->get(
+    '/friends/suggestions/all',
+    [FriendRequestController::class, 'getAllSuggestions']
+);
 
 // conversation endpoint
 
