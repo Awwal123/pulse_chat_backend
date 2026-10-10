@@ -1,4 +1,3 @@
-```php
 <?php
 
 namespace App\Events;
@@ -43,4 +42,3 @@ class MessageWasRead implements ShouldBroadcastNow
         ];
     }
 }
-```
