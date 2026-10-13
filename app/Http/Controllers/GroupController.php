@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AddedToGroup;
 use App\Http\Requests\AddGroupMemberRequest;
 use App\Http\Requests\CreateGroupRequest;
 use App\Models\Conversation;
@@ -9,6 +10,7 @@ use App\Models\ConversationMember;
 use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class GroupController extends Controller
 {
@@ -51,6 +53,16 @@ class GroupController extends Controller
 
             return $conversation;
         });
+
+        // Tell everyone who was added (not the creator) so their chat list updates at once
+        $this->notifyAdded(
+            $conversation,
+            collect($request->member_ids)
+                ->unique()
+                ->reject(fn ($id) => (int) $id === $user->id)
+                ->values()
+                ->all()
+        );
 
         $conversation->load([
             'members.user',
@@ -159,6 +171,9 @@ class GroupController extends Controller
             }
         });
 
+        // Tell the newly added people so the group shows in their chat list at once
+        $this->notifyAdded($conversation, array_values($newMemberIds));
+
         $members = $conversation->members()
             ->with('user')
             ->get();
@@ -167,5 +182,18 @@ class GroupController extends Controller
             $members,
             'Group members added successfully.'
         );
+    }
+
+    // One publish per 100 people (not one request per person), and a failure here
+    // must never fail creating the group or adding the members.
+    private function notifyAdded(Conversation $conversation, array $userIds): void
+    {
+        foreach (array_chunk($userIds, 100) as $chunk) {
+            try {
+                broadcast(new AddedToGroup($chunk, $conversation->id));
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
     }
 }

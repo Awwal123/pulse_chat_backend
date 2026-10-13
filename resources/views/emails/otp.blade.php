@@ -8,8 +8,6 @@
 </head>
 
 <body style="margin:0; padding:0; background-color:#eef3f8; -webkit-text-size-adjust:100%;">
-
-    {{-- Preview text shown next to the subject in the inbox --}}
     <div style="display:none; max-height:0; overflow:hidden; opacity:0; font-size:1px; line-height:1px; color:#eef3f8;">
         Your Pulse Chat code is {{ $otp }}. It expires in 5 minutes.
     </div>
@@ -21,7 +19,6 @@
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
                        style="max-width:480px; background-color:#ffffff; border-radius:24px; overflow:hidden; box-shadow:0 8px 30px rgba(14,116,160,0.12);">
 
-                    {{-- Header --}}
                     <tr>
                         <td align="center" bgcolor="#0a8fc7"
                             style="background-color:#0a8fc7; background-image:linear-gradient(135deg,#1aa7e8 0%,#0678a8 100%); padding:36px 24px 32px;">
@@ -43,8 +40,6 @@
                             </p>
                         </td>
                     </tr>
-
-                    {{-- Body --}}
                     <tr>
                         <td align="center" style="padding:36px 28px 8px;">
                             <h2 style="margin:0 0 10px; font-family:Arial,Helvetica,sans-serif; font-size:22px; font-weight:700; color:#0f2a3d;">
@@ -56,7 +51,7 @@
                         </td>
                     </tr>
 
-                    {{-- OTP digits --}}
+                 
                     <tr>
                         <td align="center" style="padding:24px 16px 8px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
@@ -75,7 +70,6 @@
                         </td>
                     </tr>
 
-                    {{-- Expiry pill --}}
                     <tr>
                         <td align="center" style="padding:20px 28px 8px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
@@ -89,7 +83,6 @@
                         </td>
                     </tr>
 
-                    {{-- Security note --}}
                     <tr>
                         <td style="padding:24px 28px 8px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -112,7 +105,6 @@
                         </td>
                     </tr>
 
-                    {{-- Footer --}}
                     <tr>
                         <td align="center" bgcolor="#f6f9fc"
                             style="background-color:#f6f9fc; padding:20px 24px; border-top:1px solid #e6edf3;">

@@ -57,7 +57,7 @@ class AuthController extends Controller
     {
         $user = User::where('phone', $request->phone)->first();
 
-        // Registration
+        // Reg
         if ($request->purpose === 'register') {
             if ($user) {
                 return $this->error(
